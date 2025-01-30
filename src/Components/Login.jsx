@@ -16,7 +16,8 @@ const Login = ({ onClose }) => {
     let endpoint = isRegister ? "api/register" : "api/login";
 
     try {
-      const res = await axios.post(`http://localhost:3000/${endpoint}`, {
+      //  const res = await axios.post(`http://localhost:3000/${endpoint}`, {
+        const res = await axios.post(`https://recipeblog-bend.onrender.com/${endpoint}`, {
         uname,
         password,
       });

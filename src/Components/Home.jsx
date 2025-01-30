@@ -12,7 +12,9 @@ const Home = () => {
   useEffect(() => {
     const fetchRecipes = async () => {
       try {
-        const res = await axios.get("http://localhost:3000/api/recipes");
+        //const res = await axios.get("http://localhost:3000/api/recipes");
+        const res = await axios.get("https://recipeblog-bend.onrender.com/api/recipes");
+
         setItems(res.data || []); // Ensure it's always an array
       } catch (error) {
         console.error("Error fetching data:", error);
