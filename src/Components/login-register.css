@@ -1,0 +1,181 @@
+
+@import url('https://fonts.googleapis.com/css2?family=Bona+Nova:ital,wght@0,400;0,700;1,400&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
+
+
+.backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  /* background: url('C:\Users\sherr\Documents\SECE_II\MERNSTACK\MernProjects\RecipeCommunity\recipeapp\src\assets\Orange-Food-Indian-Recipe.png') no-repeat center/contain; */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+/* Styling for the modal (dialog) */
+.model {
+  position: absolute;
+  top: 100px;
+  background-color: #fff;
+  border-radius: 8px;
+  padding: 20px;
+  width: 500px;
+  max-width: 90%;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border: none;
+  z-index: 1010;
+  font-family: Arial, sans-serif;
+}
+
+/* Heading inside the modal */
+.model h1 {
+  font-size: 1.5rem;
+  margin: 0;
+  color: #ffffff;
+  font-family: 'Poppins', sans-serif;
+  font-size: 2rem;
+  margin-bottom: 30px;
+  
+}
+
+/* Optional: Add animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.model {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.model {
+  background: url('https://media.istockphoto.com/id/1894157355/vector/abstract-3d-orange-cylinder-podium-pedestal-background-with-white-bounce-sphere-balls-wall.jpg?s=612x612&w=0&k=20&c=jQYIQ_2i8YkuIIYhDPi34aoVu3MC47uFuXSzBcbZClo=') no-repeat center/cover;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  /* min-height: 100vh; */
+  /* width: 50%;
+  height: 80%; */
+  color: aliceblue;
+  font-family: 'Poppins', sans-serif;
+}
+
+
+.loginform{
+  text-align: center;
+  border: 1px solid rgb(201, 139, 139);
+  width: 300px;
+  padding: 30px;
+  border-radius: 20px;
+  padding-bottom: 50px;
+  height: 300px;
+  background: transparent;
+  border: 2px solid #e4ad8e;
+  backdrop-filter:blur(20px) ;
+  
+}
+
+.formgroup input{
+  width: 220px;
+  height: 35px;
+  border: none;
+  outline: none;
+  background: none;
+  /* text-align: left;
+  padding-left: 20px; */
+ 
+}
+.formgroup{
+  background: none;
+  border-radius: 20px;
+  border: 1px solid white;
+  padding: 0;
+  /* margin: 40px 0px; */
+  margin-bottom: 0px;
+  margin-top: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.formgroup input::placeholder {
+  color: #f8f4f4;
+  font-style: normal;
+  font-size: 0.7rem;
+  transition: color 0.3s ease-in-out;
+}
+
+input:focus::placeholder {
+  color: transparent;
+}
+
+input::selection {
+  border: none;
+}
+
+.icon{
+  color: #ffffff;
+  align-items:center ;
+  
+}
+
+.forgotpass{
+  position: absolute;
+  right: 40px;
+  margin-top: 10px;
+  font-size: 12px;
+}
+
+.submitlogin-btn{
+  width: 290px;
+  padding: 10px;
+  border-radius: 20px;
+  outline: none;
+  border: none;
+  font-size: 1rem;
+  font-weight: bold;
+} 
+.submitlogin-btn:hover{
+  background: #ff6a00;
+  transform: scale(1.06);
+  transition: 0.3s;
+  color: aliceblue;
+  border: 1px solid #f8f4f4;
+  box-shadow: black;
+}
+
+.submitlogin{
+  position: absolute;
+  top: 70%;
+  margin-top: 10px;
+}
+
+
+
+.register-link {
+  margin-top: 120px; 
+  font-size: 12px;
+
+}
+.register-link p{
+  text-align: center;
+}
+.register-link span{
+  color: #ff9205;
+  font-weight: 600;
+}
+
+.loginform a{
+  text-decoration: none;
+}
+

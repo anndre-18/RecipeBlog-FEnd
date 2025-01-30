@@ -1,0 +1,242 @@
+@import url('https://fonts.googleapis.com/css2?family=Bona+Nova:ital,wght@0,400;0,700;1,400&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
+
+body {
+    font-family: 'Poppins', sans-serif;
+    background: #f8f8f8;
+    margin: 0;
+    padding: 0;
+}
+
+/* ========== HEADER ========== */
+header {
+    position: fixed;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(255, 119, 0, 1);
+    width: 1060px;
+    height: 60px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border: 1px solid white;
+    border-radius: 20px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    overflow: hidden;
+}
+
+.logo {
+    margin-left: 20px;
+    width: 50px;
+    height: 50px;
+}
+
+nav {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    margin-right: 20px;
+}
+
+nav .link {
+    text-decoration: none;
+    color: aliceblue;
+}
+
+.profile {
+    font-size: 25px;
+    margin-top: 5px;
+}
+
+/* ========== HOME PAGE CONTENT ========== */
+.home-content {
+    /* border: 3px solid #724b4b; */
+    text-align: center;
+    position: relative;
+    top: 100px;
+    height: auto;
+}
+
+/* ========== SEARCH BOX ========== */
+.search-box {
+    width: 600px;
+    height: 20px;
+    padding: 10px 30px;
+    border: 1px solid orangered;
+    background: rgb(255, 115, 0);
+    border-radius: 15px;
+    outline: none;
+    margin-bottom: 100px;
+}
+
+/* ========== RECIPE GRID (Meal items) ========== */
+.recipe-grid {
+    display: flex;
+    flex-wrap: wrap; /* Allows wrapping if cards exceed screen width */
+    gap: 20px; /* Spaces out cards */
+    justify-content: center; /* Centers items horizontally */
+    padding: 20px;
+}
+
+/* ========== RECIPE CARD ========== */
+.recipe-card {
+    display: flex;
+    flex-wrap: wrap; /* Ensures wrapping on small screens */
+    gap: 20px; /* Space between cards */
+    justify-content: center; /* Centers the cards */
+    width: 100%; /* Makes the recipe-card container take full width */
+}
+
+.card {
+    width: 250px; /* Fixed width for each card */
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    transition: transform 0.3s ease;
+    margin: 10px;
+}
+
+.card:hover {
+    transform: scale(1.05);
+}
+
+/* IMAGE STYLE */
+.image-card {
+    width: 100%;
+    height: 150px;
+    border-bottom: 1px solid #ddd;
+}
+
+.image-card img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 10px 10px 0 0;
+}
+
+/* ========== CARD DETAILS ========== */
+.name-card {
+    text-align: center;
+    padding: 15px;
+    font-size: 16px;
+}
+
+.name-card h3 {
+    margin: 10px 0;
+    font-size: 18px;
+}
+
+.name-card button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    position: relative;
+    margin-top: 10px;
+    font-size: 18px;
+}
+
+.btn:visited {
+    color: #c68e8e;
+  }
+  
+  
+  
+
+/* ========== ADD RECIPE FORM ========== */
+.recipe-content {
+    position: absolute;
+    top: 150px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 600px;
+    max-width: 600px;
+    padding: 20px;
+    background-color: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* FORM STYLING  */
+.form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.form-input {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-input label {
+    font-size: 14px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 8px;
+}
+
+/*input & text area */
+.input {
+    padding: 10px;
+    font-size: 14px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    outline: none;
+    transition: border-color 0.3s;
+    background-color: #fefefe;
+}
+
+.input:focus {
+    border-color: #007bff;
+}
+
+/* File input styling */
+.input[type="file"] {
+    padding: 5px;
+    font-size: 14px;
+}
+
+/* Submit Button */
+.submit-button {
+    padding: 12px 20px;
+    background-color: #ff9d00;
+    color: #ffffff;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s, box-shadow 0.3s;
+}
+
+.submit-button:hover {
+    background-color: #0056b3;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.submit-button:active {
+    background-color: #004494;
+}
+
+/* ========== RESPONSIVE DESIGN ========== */
+@media (max-width: 768px) {
+    .recipe-grid {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .card {
+        width: 90%; /* Full width on smaller screens */
+    }
+
+    .recipe-content {
+        margin: 20px;
+        padding: 15px;
+    }
+
+    .input,
+    .submit-button {
+        font-size: 14px;
+    }
+}
