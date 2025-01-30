@@ -2,7 +2,7 @@ import React, { useEffect } from "react";
 import { useState } from "react";
 import { CgProfile } from "react-icons/cg";
 import { Link } from "react-router"; 
-
+import Login from "./Login";
 import './header-home.css'
 
 
