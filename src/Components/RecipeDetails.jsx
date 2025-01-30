@@ -4,6 +4,7 @@ import React from 'react';
 const RecipeDetails = ({ recipe, onClose }) => {
   if (!recipe) return null; // Don't render if no recipe is selected
 
+  
   return (
     <div className="recipe-details-overlay">
       <div className="recipe-details">

@@ -34,7 +34,7 @@ const Login = ({ onClose }) => {
         alert(res.data.message || "Invalid credentials!");
       }
     } catch (error) {
-      setError(error.response?.data?.error || "Something went wrong!");
+      setError(error.response?.data?.error || "Something went wrong!!!");
     }
   };
 

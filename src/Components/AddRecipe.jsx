@@ -41,7 +41,7 @@ const AddRecipe = () => {
         },
       });
 
-      // Log the success message and the details of the newly added recipe to the console
+      // Log the success message and  the details of the newly added recipe to the console
       console.log('Recipe added successfully:', response.data);
 
       setSuccessMessage('Recipe added successfully!');
