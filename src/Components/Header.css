@@ -1,0 +1,75 @@
+header {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--glass-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  width: 90%;
+  max-width: 1060px;
+  height: 70px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border: 1px solid var(--glass-border);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--glass-shadow);
+  z-index: 100;
+  transition: var(--transition);
+}
+
+.logo {
+  margin-left: 20px;
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  object-fit: cover;
+  box-shadow: var(--shadow-sm);
+}
+
+nav {
+  display: flex;
+  gap: 30px;
+  align-items: center;
+  margin-right: 30px;
+}
+
+nav .link {
+  text-decoration: none;
+  color: var(--text-main);
+  font-weight: 500;
+  font-size: 16px;
+  transition: var(--transition);
+  cursor: pointer;
+  position: relative;
+  padding: 5px 0;
+}
+
+nav .link::after {
+  content: "";
+  position: absolute;
+  width: 0;
+  height: 2px;
+  bottom: 0;
+  left: 50%;
+  background: var(--primary-gradient);
+  transition: var(--transition);
+  transform: translateX(-50%);
+  border-radius: 2px;
+}
+
+nav .link:hover {
+  color: var(--primary);
+}
+
+nav .link:hover::after {
+  width: 100%;
+}
+
+@media (max-width: 768px) {
+  header {
+    width: 95%;
+    padding: 0 15px;
+  }
+}

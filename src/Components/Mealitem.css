@@ -1,0 +1,149 @@
+.recipe-grid {
+  padding: 60px 40px;
+  display: flex;
+  justify-content: center;
+}
+
+.recipe-card {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 24px;
+  width: 100%;
+  max-width: 1240px;
+}
+
+.card {
+  background: #fcfcfc;
+  border-radius: 18px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  box-shadow: 0 8px 22px rgba(17, 24, 39, 0.08);
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #f0f0f0;
+}
+
+.card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 16px 36px rgba(17, 24, 39, 0.14);
+}
+
+.image-card {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  border-radius: 16px 16px 0 0;
+}
+
+.image-card img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  --fit-scale: 1;
+  transform: scale(var(--fit-scale));
+  transition: transform 0.4s ease;
+}
+
+.card:hover img {
+  transform: scale(calc(var(--fit-scale) + 0.06));
+}
+
+.time-badge {
+  position: absolute;
+  left: 12px;
+  bottom: 12px;
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border-radius: 999px;
+  color: #232323;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.14);
+}
+
+.card-content {
+  padding: 14px 16px 16px;
+}
+
+.name-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+.name-card h3 {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #1f1f1f;
+  margin: 0;
+  line-height: 1.35;
+}
+
+.name-card button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+
+.meta-row {
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #6b7280;
+  font-size: 0.88rem;
+  font-weight: 500;
+}
+
+.rating {
+  color: #f59e0b;
+  font-weight: 600;
+}
+
+.category {
+  color: #6b7280;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.price {
+  margin-left: auto;
+  color: #374151;
+  font-weight: 600;
+}
+
+.created-at {
+  margin: 8px 0 0 0;
+  color: #6b7280;
+  font-size: 0.82rem;
+}
+
+.btn {
+  transition: transform 0.2s ease;
+}
+
+.btn:hover {
+  transform: scale(1.2);
+}
+
+@media (max-width: 768px) {
+  .recipe-grid {
+    padding: 40px 20px;
+  }
+
+  .image-card {
+    aspect-ratio: 4 / 3;
+  }
+
+  .card {
+    width: 100%;
+    max-width: 350px;
+  }
+}

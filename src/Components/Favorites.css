@@ -1,0 +1,55 @@
+.fav-content {
+  min-height: 100vh;
+  padding-bottom: 50px;
+  background: #d0e3d0;
+}
+
+.fav-hero {
+  text-align: center;
+  padding: 130px 20px 5px;
+}
+
+.fav-title {
+  margin: 0;
+  color: #1f2937;
+  font-size: clamp(1.8rem, 2.5vw, 2.4rem);
+  font-weight: 700;
+}
+
+.fav-subtitle {
+  margin-top: 10px;
+  color: #6b7280;
+  font-size: 1rem;
+}
+
+.fav-container {
+  width: 100%;
+  max-width: 1240px;
+  margin: 0 auto;
+}
+
+.fav-message {
+  width: 100%;
+  text-align: center;
+  padding: 40px 16px;
+  color: #4b5563;
+}
+
+.fav-error {
+  color: #c62828;
+}
+
+.fav-empty {
+  width: 100%;
+  text-align: center;
+  padding: 50px 16px;
+  color: #4b5563;
+}
+
+.fav-empty p {
+  margin: 0;
+}
+
+.fav-empty p + p {
+  margin-top: 10px;
+}

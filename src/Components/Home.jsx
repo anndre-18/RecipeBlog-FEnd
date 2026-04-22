@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import Mealitem from './Mealitem';
-import './header-home.css';
+import "./Home.css";
 
 const Home = () => {
   const [items, setItems] = useState([]); // Stores the recipes
@@ -12,8 +12,8 @@ const Home = () => {
   useEffect(() => {
     const fetchRecipes = async () => {
       try {
-        //const res = await axios.get("http://localhost:3000/api/recipes");
-        const res = await axios.get("https://recipeblog-bend.onrender.com/api/recipes");
+        const res = await axios.get("http://localhost:3000/api/recipes");
+        // const res = await axios.get("https://recipeblog-bend.onrender.com/api/recipes");
 
         setItems(res.data || []); // Ensure it's always an array
       } catch (error) {
@@ -27,23 +27,56 @@ const Home = () => {
     fetchRecipes();
   }, []);
 
+
+   const scrollTosearch = () => {
+  const section = document.getElementById("search");
+  section?.scrollIntoView({ behavior: "smooth" });
+};
+
+
   // Filter recipes based on search input
   const filteredItems = items.filter((item) =>
-    item.title.toLowerCase().includes(search.toLowerCase())
+    (item.recipeName || item.title || "")
+      .toLowerCase()
+      .includes(search.toLowerCase())
   );
 
+ 
   return (
     <div className="home-content">
-      <section className="search">
-        <h1 className="s-title">Search for Recipes</h1>
-        <input
-          type="text"
-          className="search-box"
-          placeholder="Search recipes..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
+      <div className="hero-section">
+        
+        <div className="hero-content">
+          <div className="hero-text-content">
+            <h1 className="hero-title">Discover & Share Amazing Recipes</h1>
+            <p className="hero-subtitle">Join our community of food lovers</p>
+            <div className="hero-buttons">
+              <button className="hero-btn main-btn" onClick={scrollTosearch}>Explore recipes</button>
+              <button className="hero-btn secondary-btn">Create post</button>
+            </div>
+          </div>
+          <img src="/assets/hero_page_img.png" alt="plates" className="hero-image" />
+        </div>
+
+      </div>
+
+      <section  id='search'>
+        {/* <p>nothing</p> */}
+          {/* <div className="search-content"> */}
+            <h1 className="s-title">Search for Recipes</h1>
+            <input
+              type="text"
+              className="search-box"
+              placeholder="Search recipes..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+
+          {/* </div> */}
+        
       </section>
+
+      
 
       <div className="container">
         {loading ? (
