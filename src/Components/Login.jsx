@@ -17,7 +17,7 @@ const Login = ({ onClose }) => {
   const navigate = useNavigate();
   const otpRefs = useRef([]);
 
-  const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
+  const API_BASE_URL = import.meta.env.VITE_API_URL || "https://recipeblog-bend.onrender.com";
 
   useEffect(() => {
     // Countdown timer for resend only in step 2
