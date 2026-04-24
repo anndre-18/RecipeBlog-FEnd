@@ -10,22 +10,23 @@ const Home = () => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    const fetchRecipes = async () => {
-      try {
-        const res = await axios.get("http://localhost:3000/api/recipes");
-        // const res = await axios.get("https://recipeblog-bend.onrender.com/api/recipes");
+  const fetchRecipes = async () => {
+    try {
+      const res = await axios.get(
+        `${process.env.REACT_APP_API_URL}/api/recipes`
+      );
 
-        setItems(res.data || []); // Ensure it's always an array
-      } catch (error) {
-        console.error("Error fetching data:", error);
-        setError("Failed to fetch recipes.");
-      } finally {
-        setLoading(false);
-      }
-    };
+      setItems(res.data || []);
+    } catch (error) {
+      console.error("Error fetching data:", error);
+      setError("Failed to fetch recipes.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    fetchRecipes();
-  }, []);
+  fetchRecipes();
+}, []);
 
 
    const scrollTosearch = () => {
