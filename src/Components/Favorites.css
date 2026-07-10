@@ -22,11 +22,12 @@
   font-size: 1rem;
 }
 
-.fav-container {
-  width: 100%;
-  max-width: 1240px;
-  margin: 0 auto;
-}
+/* .fav-container {
+    display: grid;
+    grid-template-rows: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 30px;
+    align-items: start;
+} */
 
 .fav-message {
   width: 100%;

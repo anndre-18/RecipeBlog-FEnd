@@ -5,10 +5,10 @@ import api from "../utils/api";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
 import ConfirmDialog from "./ConfirmDialog";
-import "./Mealitem.css";
+import "./Recipeitem.css";
 import recipeImage from "./image.png";
 
-const Mealitem = ({ data, showRemoveConfirm = false, onFavoriteRemoved }) => {
+const Recipeitem = ({ data, showRemoveConfirm = false, onFavoriteRemoved }) => {
   const { isAuthenticated, updateUser } = useAuth();
   const { showToast } = useToast();
   const [likedItems, setLikedItems] = useState({});
@@ -152,4 +152,4 @@ const Mealitem = ({ data, showRemoveConfirm = false, onFavoriteRemoved }) => {
   );
 };
 
-export default Mealitem;
+export default Recipeitem;

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
-import Mealitem from './Mealitem';
+import api from '../utils/api';
+import Recipeitem from './Recipeitem';
 import "./Home.css";
 
 const Home = () => {
@@ -12,9 +12,7 @@ const Home = () => {
   useEffect(() => {
   const fetchRecipes = async () => {
     try {
-      const res = await axios.get(
-        `${process.env.REACT_APP_API_URL}/api/recipes`
-      );
+      const res = await api.get("/api/recipes");
 
       setItems(res.data || []);
     } catch (error) {
@@ -85,7 +83,7 @@ const Home = () => {
         ) : error ? (
           <p>{error}</p>
         ) : filteredItems.length > 0 ? (
-          <Mealitem data={filteredItems} />
+          <Recipeitem data={filteredItems} />
         ) : (
           <p>No recipes found</p>
         )}

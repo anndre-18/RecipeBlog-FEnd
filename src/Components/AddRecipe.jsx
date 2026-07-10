@@ -1,5 +1,9 @@
 import React, { useRef, useState } from "react";
 import axios from "axios";
+import api from "../utils/api";
+import { useToast } from "../context/ToastContext";
+import ImageCropperModal from "./ImageCropperModal";
+import { blobToFile } from "../utils/cropImage";
 import "./add-recipe.css";
 
 const MAX_IMAGES = 3;
@@ -11,9 +15,9 @@ const CLOUDINARY_UPLOAD_PRESET =
   import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET ||
   import.meta.env.VITE_CLOUDINARY_PRESET ||
   "";
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
 
 const AddRecipe = () => {
+  const { showToast } = useToast();
   const [formData, setFormData] = useState({
     recipeName: "",
     timeRequired: "",
@@ -21,19 +25,12 @@ const AddRecipe = () => {
     description: "",
   });
   const [selectedImages, setSelectedImages] = useState([]);
-  const [uploadedImageUrls, setUploadedImageUrls] = useState([]);
   const [errorMessage, setErrorMessage] = useState("");
-  const [successMessage, setSuccessMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const fileInputRef = useRef(null);
 
-  const applyAutoZoomForRatio = (event) => {
-    const image = event.currentTarget;
-    const ratio = image.naturalWidth / image.naturalHeight;
-    const targetRatio = 4 / 3;
-    const fitScale = ratio < targetRatio ? 1.18 : 1;
-    image.style.setProperty("--fit-scale", String(fitScale));
-  };
+  const [cropQueue, setCropQueue] = useState([]);
+  const [currentCrop, setCurrentCrop] = useState(null);
 
   const handleFieldChange = (event) => {
     const { name, value } = event.target;
@@ -44,13 +41,22 @@ const AddRecipe = () => {
     fileInputRef.current?.click();
   };
 
+  const startCropQueue = (files) => {
+    const queue = files.map((file) => ({
+      id: `${file.name}-${file.size}-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+      file,
+      previewUrl: URL.createObjectURL(file),
+    }));
+
+    setCropQueue(queue);
+    setCurrentCrop(queue[0]);
+  };
+
   const handleImageSelect = (event) => {
     const incomingFiles = Array.from(event.target.files || []);
     if (incomingFiles.length === 0) return;
 
-    const currentCount = selectedImages.length;
-    const remainingSlots = MAX_IMAGES - currentCount;
-
+    const remainingSlots = MAX_IMAGES - selectedImages.length;
     if (remainingSlots <= 0) {
       setErrorMessage("Maximum 3 images are allowed.");
       event.target.value = "";
@@ -58,18 +64,14 @@ const AddRecipe = () => {
     }
 
     const filesToAdd = incomingFiles.slice(0, remainingSlots);
-    const mappedFiles = filesToAdd.map((file) => ({
-      id: `${file.name}-${file.size}-${Date.now()}-${Math.random().toString(16).slice(2)}`,
-      file,
-      previewUrl: URL.createObjectURL(file),
-    }));
+    startCropQueue(filesToAdd);
 
-    setSelectedImages((prev) => [...prev, ...mappedFiles]);
-    setErrorMessage(
-      incomingFiles.length > remainingSlots
-        ? "Only 3 images are allowed. Extra files were ignored."
-        : ""
-    );
+    if (incomingFiles.length > remainingSlots) {
+      setErrorMessage("Only 3 images are allowed. Extra files were ignored.");
+    } else {
+      setErrorMessage("");
+    }
+
     event.target.value = "";
   };
 
@@ -96,7 +98,12 @@ const AddRecipe = () => {
 
   const validateForm = () => {
     const { recipeName, timeRequired, ingredients, description } = formData;
-    if (!recipeName.trim() || !timeRequired.toString().trim() || !ingredients.trim() || !description.trim()) {
+    if (
+      !recipeName.trim() ||
+      !timeRequired.toString().trim() ||
+      !ingredients.trim() ||
+      !description.trim()
+    ) {
       return "All fields are required.";
     }
     if (selectedImages.length < 1) {
@@ -124,13 +131,41 @@ const AddRecipe = () => {
       });
       return [];
     });
-    setUploadedImageUrls([]);
+  };
+
+  const handleCropConfirm = (blob) => {
+    if (!currentCrop) return;
+
+    const croppedFile = blobToFile(blob, `recipe-${currentCrop.id}.jpg`);
+    const previewUrl = URL.createObjectURL(croppedFile);
+
+    setSelectedImages((prev) => [
+      ...prev,
+      {
+        id: currentCrop.id,
+        file: croppedFile,
+        previewUrl,
+      },
+    ]);
+
+    if (currentCrop.previewUrl) URL.revokeObjectURL(currentCrop.previewUrl);
+
+    const remaining = cropQueue.filter((item) => item.id !== currentCrop.id);
+    setCropQueue(remaining);
+    setCurrentCrop(remaining[0] || null);
+  };
+
+  const handleCropCancel = () => {
+    cropQueue.forEach((item) => {
+      if (item.previewUrl) URL.revokeObjectURL(item.previewUrl);
+    });
+    setCropQueue([]);
+    setCurrentCrop(null);
   };
 
   const handleSubmit = async (event) => {
     event.preventDefault();
     setErrorMessage("");
-    setSuccessMessage("");
 
     const validationError = validateForm();
     if (validationError) {
@@ -140,8 +175,9 @@ const AddRecipe = () => {
 
     setIsSubmitting(true);
     try {
-      const urls = await Promise.all(selectedImages.map((image) => uploadImageToCloudinary(image.file)));
-      setUploadedImageUrls(urls);
+      const urls = await Promise.all(
+        selectedImages.map((image) => uploadImageToCloudinary(image.file))
+      );
 
       const postPayload = {
         recipeName: formData.recipeName.trim(),
@@ -152,15 +188,13 @@ const AddRecipe = () => {
         createdAt: new Date(),
       };
 
-      await axios.post(`${API_BASE_URL}/api/recipes`, postPayload, {
-        headers: { "Content-Type": "application/json" },
-      });
-
-      setSuccessMessage("Recipe post created successfully.");
+      await api.post("/api/recipes", postPayload);
+      showToast("Recipe post created successfully.", "success");
       resetForm();
     } catch (error) {
       console.error(error);
       setErrorMessage("Failed to create post. Please try again.");
+      showToast("Failed to create post.", "error");
     } finally {
       setIsSubmitting(false);
     }
@@ -179,7 +213,7 @@ const AddRecipe = () => {
                 {selectedImages.map((image) => (
                   <div className="preview-card" key={image.id}>
                     <div className="preview-media">
-                      <img src={image.previewUrl} alt="Recipe preview" onLoad={applyAutoZoomForRatio} />
+                      <img src={image.previewUrl} alt="Recipe preview" />
                     </div>
                     <button type="button" onClick={() => handleRemoveImage(image.id)}>
                       Remove
@@ -189,15 +223,25 @@ const AddRecipe = () => {
               </div>
             )}
           </div>
-          <p className="ratio-note">Preview ratio locked to 4:3 for consistent cards.</p>
+          <p className="ratio-note">
+            Images are cropped to 4:3 before upload for consistent cards.
+          </p>
 
           <div className="dots-row" aria-label="selected images indicator">
             {Array.from({ length: MAX_IMAGES }).map((_, index) => (
-              <span key={index} className={`dot ${index < selectedImages.length ? "active" : ""}`} />
+              <span
+                key={index}
+                className={`dot ${index < selectedImages.length ? "active" : ""}`}
+              />
             ))}
           </div>
 
-          <button className="add-image-button" type="button" onClick={handleAddImageClick}>
+          <button
+            className="add-image-button"
+            type="button"
+            onClick={handleAddImageClick}
+            disabled={selectedImages.length >= MAX_IMAGES || !!currentCrop}
+          >
             Add Image
           </button>
           <input
@@ -265,12 +309,19 @@ const AddRecipe = () => {
           </form>
 
           {!!errorMessage && <p className="form-message error">{errorMessage}</p>}
-          {!!successMessage && <p className="form-message success">{successMessage}</p>}
-          {uploadedImageUrls.length > 0 && (
-            <p className="uploaded-count">Uploaded images: {uploadedImageUrls.length}</p>
-          )}
         </div>
       </div>
+
+      {currentCrop && (
+        <ImageCropperModal
+          imageSrc={currentCrop.previewUrl}
+          aspect={4 / 3}
+          title="Crop Recipe Image"
+          showRotate
+          onConfirm={handleCropConfirm}
+          onCancel={handleCropCancel}
+        />
+      )}
     </section>
   );
 };

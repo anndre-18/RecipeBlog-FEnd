@@ -1,54 +1,74 @@
-import React, { useEffect } from "react";
-import { useState } from "react";
-import { CgProfile } from "react-icons/cg";
-import { Link } from "react-router"; 
-import Login from "./Login";
+import React, { useState } from "react";
+import { Link, useNavigate } from "react-router";
+import { useAuth } from "../context/AuthContext";
 import "./Header.css";
 
+const Header = () => {
+  const { isAuthenticated, logout } = useAuth();
+  const [showLogoutDialog, setShowLogoutDialog] = useState(false);
+  const navigate = useNavigate();
 
+  const handleLogoutClick = () => {
+    setShowLogoutDialog(true);
+  };
 
+  const confirmLogout = () => {
+    logout();
+    setShowLogoutDialog(false);
+    navigate("/login");
+  };
 
-const Header = ()=>{
-    const[isOpen,setIsOpen]=useState(false);
-    let token=localStorage.getItem("token")
-    const [isLogin,setIsLogin]=useState(token ? false : true)
+  return (
+    <>
+      <header>
+        <img className="logo" src="../public/assets/logo_img.png" alt="image-logo" />
+        <nav>
+          <Link className="link" to="/">
+            Home
+          </Link>
+          <Link className="link" to="/addrecipe">
+            Create
+          </Link>
+          <Link className="link" to="/favorites">
+            Favorites
+          </Link>
+          <Link className="link" to="/profile">
+            Profile
+          </Link>
 
-    useEffect(()=>{
-        setIsLogin(token ? false : true)
-    },[token])
+          {isAuthenticated ? (
+            <p className="link" onClick={handleLogoutClick}>
+              Logout
+            </p>
+          ) : (
+            <Link className="link" to="/login">
+              Login
+            </Link>
+          )}
+        </nav>
+      </header>
 
-    const checkLogin=()=>{
-        if(token){
-            localStorage.removeItem("token")
-            localStorage.removeItem("user")
-            setIsLogin(true)
-        }
-        else setIsOpen(true)
-    }
+      {showLogoutDialog && (
+        <div className="logout-dialog-backdrop" onClick={() => setShowLogoutDialog(false)}>
+          <div className="logout-dialog" onClick={(e) => e.stopPropagation()}>
+            <h3>Do you want to logout?</h3>
+            <div className="logout-dialog-actions">
+              <button type="button" className="logout-yes" onClick={confirmLogout}>
+                Yes
+              </button>
+              <button
+                type="button"
+                className="logout-no"
+                onClick={() => setShowLogoutDialog(false)}
+              >
+                No
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+};
 
-    return(
-        <>
-            <header>
-                
-                <img className="logo" src="../public/assets/logo_img.png" alt="image-logo" />
-                <nav>
-                    <Link className="link" to="/">Home</Link>
-                    <Link className="link" to={!isLogin ? "/addrecipe" : "/"}>Create</Link>
-                    <Link className="link" to="/favorites">Favorites</Link>
-                    <Link className="link" to="/profile">Profile</Link>
-                    
-                    {/* <Link to="/login" onClick={checkLogin}>Login</Link> */}
-                    
-                    <p className="link" onClick={checkLogin}>{(isLogin)? "Login" : "Logout"}</p>
-                    {/* <Link className="profile" to="/profile"><CgProfile /></Link> */}
-
-                    
-
-                </nav>
-
-            </header>
-            { (isOpen) && <Login onClose={ ()=>setIsOpen(false) }/>}
-        </>
-    )
-}
 export default Header;

@@ -1,34 +1,30 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
+import { Navigate, Outlet } from "react-router";
 import Header from "./Components/Header";
-import { Outlet, useLocation } from 'react-router';
-import Login from "./Components/Login";
+import { useAuth } from "./context/AuthContext";
 
 const MainLayout = () => {
-    const [token, setToken] = useState(localStorage.getItem("token"));
-    const location = useLocation();
+  const { isAuthenticated, loading } = useAuth();
 
-    // Check for token on route change
-    useEffect(() => {
-        setToken(localStorage.getItem("token"));
-    }, [location]);
-
-    // If no token exists, force render ONLY the Login module
-    if (!token) {
-        return (
-            <div style={{minHeight: '100vh', display: 'flex', background: 'var(--bg-color)'}}>
-                {/* Passing empty onClose to prevent closing the modal manually */}
-                <Login onClose={() => {}} />
-            </div>
-        );
-    }
-
-    // Authenticated state
+  if (loading) {
     return (
-        <>
-            <Header/>
-            <Outlet/>
-        </>
+      <div className="auth-loading-screen">
+        <span className="spinner" aria-hidden="true" />
+        Loading...
+      </div>
     );
-}
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return (
+    <>
+      <Header />
+      <Outlet />
+    </>
+  );
+};
 
 export default MainLayout;

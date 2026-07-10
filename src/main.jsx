@@ -1,37 +1,42 @@
-import {BrowserRouter} from 'react-router'
-import { Routes } from 'react-router'
-import { Route } from 'react-router'
-import { createRoot } from 'react-dom/client'
-import './index.css'
+import { BrowserRouter, Routes, Route, Navigate } from "react-router";
+import { createRoot } from "react-dom/client";
+import "./index.css";
+import { AuthProvider } from "./context/AuthContext";
+import { ToastProvider } from "./context/ToastContext";
+import MainLayout from "./MainLayout.jsx";
+import Register from "./Components/Register.jsx";
+import AddRecipe from "./Components/AddRecipe.jsx";
+import Home from "./Components/Home.jsx";
+import Login from "./Components/Login.jsx";
+import VerifyOtp from "./Components/VerifyOtp.jsx";
+import ForgotPassword from "./Components/ForgotPassword.jsx";
+import ResetPassword from "./Components/ResetPassword.jsx";
+import Favorites from "./Components/Favorites.jsx";
+import Profile from "./Components/Profile.jsx";
+import RecipeDetailsPage from "./Components/RecipeDetailsPage.jsx";
 
-import MainLayout from './MainLayout.jsx'
-import Register from './Components/Register.jsx'
-import AddRecipe from './Components/AddRecipe.jsx'
-import Home from './Components/Home.jsx'
-import Login from './Components/Login.jsx'
-import Favorites from './Components/Favorites.jsx'
-import Profile from './Components/Profile.jsx'
-// import Login from './Components/login.jsx'
-
-createRoot(document.getElementById('root')).render(
+createRoot(document.getElementById("root")).render(
   <BrowserRouter>
-    <Routes>
-      {/* <Route path='/login' element={<Login/>}/>
-      <Route path='/register' element={<Register/>}/> */}
-      <Route element={<MainLayout/>}>
-        {/* <Route path='/' element={<Login/>}/> */}
-        <Route path='/' element={<Home/>}/>
-        <Route path='/addrecipe' element={<AddRecipe/>}/>
-        <Route path='/register' element={<Register/>}/>
-        <Route path='/favorites' element={<Favorites/>}/>
-        <Route path='/profile' element={<Profile/>}/>
-      </Route>
-    </Routes>
-  
+    <AuthProvider>
+      <ToastProvider>
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/verify-otp" element={<VerifyOtp />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
+
+          <Route element={<MainLayout />}>
+            <Route path="/" element={<Home />} />
+            <Route path="/addrecipe" element={<AddRecipe />} />
+            <Route path="/favorites" element={<Favorites />} />
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/recipe/:id" element={<RecipeDetailsPage />} />
+          </Route>
+
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </ToastProvider>
+    </AuthProvider>
   </BrowserRouter>
-
-
-  
-    
-  
-)
+);
