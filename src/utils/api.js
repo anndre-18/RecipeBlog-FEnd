@@ -1,12 +1,14 @@
 import axios from "axios";
 
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
+// Vite automatically loads .env.development (npm run dev) or
+// .env.production (npm run build / Vercel deployment).
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
 
 const api = axios.create({
   baseURL: API_BASE_URL,
 });
 
+// Attach JWT token to every request
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem("token");
   if (token) {
@@ -15,6 +17,7 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+// Global 401 handler — redirect to login on expired/invalid token
 api.interceptors.response.use(
   (response) => response,
   (error) => {
