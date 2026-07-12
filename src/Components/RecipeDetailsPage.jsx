@@ -1,225 +1,269 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router";
+import { useParams, useNavigate } from "react-router";
 import { IoMdHeart, IoMdHeartEmpty } from "react-icons/io";
+import { IoShareSocialOutline, IoArrowBack } from "react-icons/io5";
 import api from "../utils/api";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
-import ConfirmDialog from "./ConfirmDialog";
-import recipeImage from "./image.png";
 import "./RecipeDetailsPage.css";
 
 const RecipeDetailsPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { isAuthenticated, updateUser } = useAuth();
-  const { showToast } = useToast();
+  const toast = useToast();
 
   const [recipe, setRecipe] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [isFavorite, setIsFavorite] = useState(false);
+  const [error, setError] = useState(null);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
-  const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
-
-  const galleryImages = useMemo(() => {
-    if (!recipe) return [];
-    if (Array.isArray(recipe.images) && recipe.images.length > 0) {
-      return recipe.images;
-    }
-    return recipe.image ? [recipe.image] : [];
-  }, [recipe]);
+  const [isFavorited, setIsFavorited] = useState(false);
+  const [favoriteLoading, setFavoriteLoading] = useState(false);
 
   useEffect(() => {
     const fetchRecipe = async () => {
       try {
         const res = await api.get(`/api/recipes/${id}`);
         setRecipe(res.data);
-      } catch {
+      } catch (err) {
+        console.error(err);
         setError("Recipe not found.");
       } finally {
         setLoading(false);
       }
     };
-
     fetchRecipe();
   }, [id]);
 
   useEffect(() => {
-    const fetchFavoriteStatus = async () => {
-      if (!isAuthenticated || !id) return;
+    if (!isAuthenticated) return;
+    const fetchFavoriteIds = async () => {
       try {
         const res = await api.get("/api/users/me/favoriteIds");
-        setIsFavorite(res.data.includes(id));
+        setIsFavorited(res.data.includes(id));
       } catch (err) {
-        console.error(err);
+        console.error("Failed to fetch favorite status:", err);
       }
     };
-
-    fetchFavoriteStatus();
+    fetchFavoriteIds();
   }, [id, isAuthenticated]);
 
-  const toggleFavorite = async () => {
+  const galleryImages = useMemo(() => {
+    if (!recipe) return [];
+    if (Array.isArray(recipe.images) && recipe.images.length > 0) return recipe.images;
+    return recipe.image ? [recipe.image] : [];
+  }, [recipe]);
+
+  const handleToggleFavorite = async () => {
     if (!isAuthenticated) {
-      showToast("Please login to save favorites.", "error");
+      toast.info("Please login to save favorites.");
       return;
     }
 
-    const wasFavorite = isFavorite;
-    setIsFavorite(!wasFavorite);
+    const prev = isFavorited;
+    setIsFavorited(!prev);
+    setFavoriteLoading(true);
 
     try {
-      const response = await api.post("/api/favorites/toggle", { recipeId: id });
-      const updatedFavorites = response.data.favorites;
+      const res = await api.post("/api/favorites/toggle", { recipeId: id });
+      const updatedFavorites = res.data.favorites;
       const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
       updateUser({ ...storedUser, favorites: updatedFavorites });
       window.dispatchEvent(
-        new CustomEvent("favoritesUpdated", {
-          detail: { favorites: updatedFavorites },
-        })
+        new CustomEvent("favoritesUpdated", { detail: { favorites: updatedFavorites } })
       );
-
-      showToast(
-        wasFavorite ? "Removed from favorites." : "Added to favorites.",
-        "success"
-      );
+      toast.success(prev ? "Removed from favorites" : "Added to favorites");
     } catch (err) {
       console.error(err);
-      setIsFavorite(wasFavorite);
-      showToast("Failed to update favorites.", "error");
+      setIsFavorited(prev);
+      toast.error("Failed to update favorites");
+    } finally {
+      setFavoriteLoading(false);
     }
-  };
-
-  const handleFavoriteClick = () => {
-    if (isFavorite) {
-      setShowRemoveConfirm(true);
-      return;
-    }
-    toggleFavorite();
   };
 
   const handleShare = async () => {
-    const shareUrl = window.location.href;
-    try {
-      if (navigator.share) {
-        await navigator.share({
-          title: recipe?.recipeName || "Recipe",
-          url: shareUrl,
-        });
-      } else {
-        await navigator.clipboard.writeText(shareUrl);
-        showToast("Recipe link copied to clipboard.", "success");
+    const url = window.location.href;
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: recipe?.recipeName, url });
+      } catch {
+        // user cancelled
       }
-    } catch {
-      showToast("Unable to share recipe.", "error");
+    } else {
+      await navigator.clipboard.writeText(url);
+      toast.success("Link copied to clipboard!");
     }
+  };
+
+  const formatDate = (value) => {
+    if (!value) return "Unknown";
+    const d = new Date(value);
+    return Number.isNaN(d.getTime()) ? "Unknown" : d.toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" });
   };
 
   if (loading) {
     return (
-      <section className="recipe-details-page">
-        <div className="recipe-details-page-loading">Loading recipe...</div>
-      </section>
+      <div className="rdp-loading">
+        <div className="rdp-spinner" />
+        <p>Loading recipe…</p>
+      </div>
     );
   }
 
   if (error || !recipe) {
     return (
-      <section className="recipe-details-page">
-        <div className="recipe-details-page-error">
-          <p>{error || "Recipe not found."}</p>
-          <Link to="/">Back to Home</Link>
-        </div>
-      </section>
+      <div className="rdp-error">
+        <p>{error || "Recipe not found."}</p>
+        <button onClick={() => navigate(-1)}>Go Back</button>
+      </div>
     );
   }
 
-  const createdDate = recipe.createdAt
-    ? new Date(recipe.createdAt).toLocaleDateString()
-    : "N/A";
+  const recipeTitle = recipe.recipeName || recipe.title || "Recipe";
+  const recipeTime = recipe.timeRequired || recipe.time || "N/A";
+  const recipeIngredients = recipe.ingredients || "No ingredients listed.";
+  const recipeInstructions = recipe.instructions || "";
+  const recipeDescription = recipe.description || "No description available.";
+  const activeImage = galleryImages[activeImageIndex];
 
   return (
-    <section className="recipe-details-page">
-      <div className="recipe-details-page-container">
-        <button type="button" className="back-link" onClick={() => navigate(-1)}>
-          ← Back
-        </button>
+    <div className="rdp-page">
+      {/* Back button */}
+      <button className="rdp-back" onClick={() => navigate(-1)} aria-label="Go back">
+        <IoArrowBack size={20} />
+        Back
+      </button>
 
-        <div className="recipe-details-hero">
-          <div className="recipe-details-main-image">
-            <img
-              src={galleryImages[activeImageIndex] || recipeImage}
-              alt={recipe.recipeName}
-            />
-          </div>
+      <div className="rdp-layout">
+        {/* ── Left: image gallery ── */}
+        <div className="rdp-gallery-col">
+          {activeImage ? (
+            <>
+              <div className="rdp-main-image">
+                <img src={activeImage} alt={recipeTitle} />
+                {galleryImages.length > 1 && (
+                  <>
+                    <button
+                      className="rdp-nav prev"
+                      onClick={() =>
+                        setActiveImageIndex(
+                          (i) => (i - 1 + galleryImages.length) % galleryImages.length
+                        )
+                      }
+                    >
+                      ‹
+                    </button>
+                    <button
+                      className="rdp-nav next"
+                      onClick={() =>
+                        setActiveImageIndex((i) => (i + 1) % galleryImages.length)
+                      }
+                    >
+                      ›
+                    </button>
+                  </>
+                )}
+              </div>
 
-          {galleryImages.length > 1 && (
-            <div className="recipe-details-thumbs">
-              {galleryImages.map((img, index) => (
-                <button
-                  key={`${img}-${index}`}
-                  type="button"
-                  className={index === activeImageIndex ? "active" : ""}
-                  onClick={() => setActiveImageIndex(index)}
-                >
-                  <img src={img} alt={`${recipe.recipeName} ${index + 1}`} />
-                </button>
-              ))}
-            </div>
+              {galleryImages.length > 1 && (
+                <div className="rdp-thumbs">
+                  {galleryImages.map((img, idx) => (
+                    <button
+                      key={`${img}-${idx}`}
+                      className={`rdp-thumb ${idx === activeImageIndex ? "active" : ""}`}
+                      onClick={() => setActiveImageIndex(idx)}
+                      aria-label={`View image ${idx + 1}`}
+                    >
+                      <img src={img} alt={`${recipeTitle} ${idx + 1}`} />
+                    </button>
+                  ))}
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="rdp-no-image">No image available</div>
           )}
+
+          {/* Action buttons below gallery */}
+          <div className="rdp-actions">
+            <button
+              className={`rdp-fav-btn ${isFavorited ? "active" : ""}`}
+              onClick={handleToggleFavorite}
+              disabled={favoriteLoading}
+              aria-label={isFavorited ? "Remove from favorites" : "Add to favorites"}
+            >
+              {isFavorited ? (
+                <IoMdHeart size={20} />
+              ) : (
+                <IoMdHeartEmpty size={20} />
+              )}
+              {isFavorited ? "Saved" : "Save Recipe"}
+            </button>
+
+            <button className="rdp-share-btn" onClick={handleShare} aria-label="Share recipe">
+              <IoShareSocialOutline size={20} />
+              Share
+            </button>
+          </div>
         </div>
 
-        <div className="recipe-details-content">
-          <div className="recipe-details-head">
-            <div>
-              <h1>{recipe.recipeName}</h1>
-              <p className="recipe-meta">
-                <span>⏱ {recipe.timeRequired}</span>
-                <span>Posted {createdDate}</span>
-              </p>
-            </div>
+        {/* ── Right: recipe info ── */}
+        <div className="rdp-info-col">
+          <h1 className="rdp-title">{recipeTitle}</h1>
 
-            <div className="recipe-details-actions">
-              <button type="button" className="action-btn" onClick={handleFavoriteClick}>
-                {isFavorite ? (
-                  <IoMdHeart size={22} color="red" />
-                ) : (
-                  <IoMdHeartEmpty size={22} />
-                )}
-                {isFavorite ? "Favorited" : "Favorite"}
-              </button>
-              <button type="button" className="action-btn" onClick={handleShare}>
-                Share
-              </button>
+          <div className="rdp-meta">
+            <div className="rdp-meta-item">
+              <span className="rdp-meta-label">Cooking Time</span>
+              <span className="rdp-meta-value">⏱ {recipeTime}</span>
+            </div>
+            {recipe.ownerName && (
+              <div className="rdp-meta-item">
+                <span className="rdp-meta-label">Created by</span>
+                <span className="rdp-meta-value">👤 {recipe.ownerName}</span>
+              </div>
+            )}
+            <div className="rdp-meta-item">
+              <span className="rdp-meta-label">Posted</span>
+              <span className="rdp-meta-value">📅 {formatDate(recipe.createdAt)}</span>
             </div>
           </div>
 
-          <div className="recipe-section">
+          <div className="rdp-section">
             <h2>Ingredients</h2>
-            <p>{recipe.ingredients}</p>
+            <div className="rdp-ingredients">
+              {recipeIngredients.split("\n").filter(Boolean).map((line, i) => (
+                <div key={i} className="rdp-ingredient-item">
+                  <span className="rdp-bullet" />
+                  <span>{line.trim()}</span>
+                </div>
+              ))}
+            </div>
           </div>
 
-          <div className="recipe-section">
-            <h2>Cooking Instructions</h2>
-            <p>{recipe.description}</p>
+          <div className="rdp-section">
+            <h2>Instructions</h2>
+            {recipeInstructions ? (
+              <div className="rdp-instructions">
+                {recipeInstructions.split("\n").filter(Boolean).map((step, i) => (
+                  <div key={i} className="rdp-step">
+                    <span className="rdp-step-num">{i + 1}</span>
+                    <p>{step.trim()}</p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="rdp-fallback">Instructions not available.</p>
+            )}
+          </div>
+
+          <div className="rdp-section">
+            <h2>Description</h2>
+            <p className="rdp-description">{recipeDescription}</p>
           </div>
         </div>
       </div>
-
-      {showRemoveConfirm && (
-        <ConfirmDialog
-          title="Remove from Favorites?"
-          message="Are you sure you want to remove this recipe from your favorites?"
-          confirmLabel="Remove"
-          cancelLabel="Cancel"
-          danger
-          onCancel={() => setShowRemoveConfirm(false)}
-          onConfirm={() => {
-            setShowRemoveConfirm(false);
-            toggleFavorite();
-          }}
-        />
-      )}
-    </section>
+    </div>
   );
 };
 

@@ -1,77 +1,93 @@
-.confirm-dialog-backdrop {
+/* ─── Confirm Dialog ───────────────────────────────────────────────── */
+.confirm-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(15, 23, 42, 0.45);
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 2500;
-  animation: fadeIn 0.2s ease;
+  z-index: 3500;
+  animation: cfBgIn 0.18s ease;
+}
+
+@keyframes cfBgIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
 
 .confirm-dialog {
   background: #fff;
   border-radius: 18px;
-  padding: 24px;
-  width: min(400px, 90%);
-  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.2);
-  animation: slideUp 0.25s ease;
+  width: min(380px, 92vw);
+  padding: 28px 24px 22px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.22);
+  animation: cfSlide 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes cfSlide {
+  from { transform: scale(0.92) translateY(16px); opacity: 0; }
+  to   { transform: scale(1)    translateY(0);    opacity: 1; }
 }
 
 .confirm-dialog h3 {
   margin: 0 0 10px;
+  font-size: 1.1rem;
+  font-weight: 700;
   color: #1f2937;
 }
 
-.confirm-dialog p {
+.confirm-message {
   margin: 0 0 20px;
+  font-size: 0.92rem;
   color: #6b7280;
-  line-height: 1.5;
+  line-height: 1.55;
 }
 
-.confirm-dialog-actions {
+.confirm-actions {
   display: flex;
-  justify-content: flex-end;
   gap: 10px;
+  justify-content: flex-end;
 }
 
-.confirm-cancel,
-.confirm-primary,
-.confirm-danger {
-  border: none;
+.confirm-btn {
+  padding: 9px 20px;
   border-radius: 999px;
-  padding: 10px 18px;
+  font-size: 0.88rem;
   font-weight: 700;
   cursor: pointer;
+  border: none;
+  transition: opacity 0.16s ease, transform 0.16s ease;
 }
 
-.confirm-cancel {
+.confirm-btn:hover {
+  transform: translateY(-1px);
+}
+
+.confirm-btn.cancel {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.confirm-btn.cancel:hover {
   background: #e5e7eb;
-  color: #1f2937;
 }
 
-.confirm-primary {
+.confirm-btn.action.default {
   background: #599058;
   color: #fff;
 }
 
-.confirm-danger {
+.confirm-btn.action.default:hover {
+  background: #4a7a49;
+}
+
+.confirm-btn.action.danger {
   background: #dc2626;
   color: #fff;
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(12px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.confirm-btn.action.danger:hover {
+  background: #b91c1c;
 }

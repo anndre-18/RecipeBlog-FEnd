@@ -6,6 +6,7 @@ import { ToastProvider } from "./context/ToastContext";
 import MainLayout from "./MainLayout.jsx";
 import Register from "./Components/Register.jsx";
 import AddRecipe from "./Components/AddRecipe.jsx";
+import EditRecipe from "./Components/EditRecipe.jsx";
 import Home from "./Components/Home.jsx";
 import Login from "./Components/Login.jsx";
 import VerifyOtp from "./Components/VerifyOtp.jsx";
@@ -29,9 +30,10 @@ createRoot(document.getElementById("root")).render(
           <Route element={<MainLayout />}>
             <Route path="/" element={<Home />} />
             <Route path="/addrecipe" element={<AddRecipe />} />
+            <Route path="/edit-recipe/:id" element={<EditRecipe />} />
+            <Route path="/recipe/:id" element={<RecipeDetailsPage />} />
             <Route path="/favorites" element={<Favorites />} />
             <Route path="/profile" element={<Profile />} />
-            <Route path="/recipe/:id" element={<RecipeDetailsPage />} />
           </Route>
 
           <Route path="*" element={<Navigate to="/" replace />} />

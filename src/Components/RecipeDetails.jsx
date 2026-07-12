@@ -1,63 +1,113 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import { useNavigate } from "react-router";
+import { IoMdHeart, IoMdHeartEmpty } from "react-icons/io";
+import api from "../utils/api";
+import { useAuth } from "../context/AuthContext";
+import { useToast } from "../context/ToastContext";
 import "./RecipeDetails.css";
 
 const RecipeDetails = ({ recipe, onClose }) => {
   const navigate = useNavigate();
+  const { isAuthenticated, updateUser } = useAuth();
+  const toast = useToast();
 
-  if (!recipe) return null;
+  const [isFavorited, setIsFavorited] = useState(false);
+  const [favoriteLoading, setFavoriteLoading] = useState(false);
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
+
+  // ── All hooks BEFORE any early return ──────────────────────────────
 
   const galleryImages = useMemo(() => {
-    if (Array.isArray(recipe.images) && recipe.images.length > 0) {
-      return recipe.images;
-    }
+    if (!recipe) return [];
+    if (Array.isArray(recipe.images) && recipe.images.length > 0) return recipe.images;
     return recipe.image ? [recipe.image] : [];
-  }, [recipe.images, recipe.image]);
+  }, [recipe]);
 
-  const [activeImageIndex, setActiveImageIndex] = useState(0);
-  const recipeTitle = recipe.recipeName || recipe.title || "Recipe";
-  const recipeTime = recipe.timeRequired || recipe.time || "N/A";
-  const recipeIngredients = recipe.ingredients || "No ingredients available.";
-  const recipeDescription =
-    recipe.description || recipe.instruction || "No instruction available.";
-  const activeImage = galleryImages[activeImageIndex];
+  useEffect(() => {
+    if (!isAuthenticated || !recipe?.id) return;
+    let cancelled = false;
+    const fetchFav = async () => {
+      try {
+        const res = await api.get("/api/users/me/favoriteIds");
+        if (!cancelled) setIsFavorited(res.data.includes(recipe.id));
+      } catch {
+        // ignore
+      }
+    };
+    fetchFav();
+    return () => { cancelled = true; };
+  }, [isAuthenticated, recipe?.id]);
 
-  const showNext = () => {
-    if (galleryImages.length <= 1) return;
-    setActiveImageIndex((prev) => (prev + 1) % galleryImages.length);
+  // ── Early return after all hooks ────────────────────────────────────
+  if (!recipe) return null;
+
+  // ── Derived values ──────────────────────────────────────────────────
+  const recipeTitle       = recipe.recipeName  || recipe.title       || "Recipe";
+  const recipeTime        = recipe.timeRequired || recipe.time        || "N/A";
+  const recipeDescription = recipe.description                        || "No description available.";
+  const activeImage       = galleryImages[activeImageIndex];
+
+  // ── Handlers ────────────────────────────────────────────────────────
+  const handleToggleFavorite = async (e) => {
+    e.stopPropagation();
+    if (!isAuthenticated) {
+      toast.info("Please login to save favorites.");
+      return;
+    }
+    const prev = isFavorited;
+    setIsFavorited(!prev);
+    setFavoriteLoading(true);
+    try {
+      const res = await api.post("/api/favorites/toggle", { recipeId: recipe.id });
+      const updatedFavorites = res.data.favorites;
+      const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
+      updateUser({ ...storedUser, favorites: updatedFavorites });
+      window.dispatchEvent(
+        new CustomEvent("favoritesUpdated", { detail: { favorites: updatedFavorites } })
+      );
+      toast.success(prev ? "Removed from favorites" : "Added to favorites");
+    } catch {
+      setIsFavorited(prev);
+      toast.error("Failed to update favorites");
+    } finally {
+      setFavoriteLoading(false);
+    }
   };
 
-  const showPrev = () => {
-    if (galleryImages.length <= 1) return;
-    setActiveImageIndex(
-      (prev) => (prev - 1 + galleryImages.length) % galleryImages.length
-    );
-  };
-
-  const handleViewFull = () => {
+  const handleViewFullRecipe = () => {
     onClose();
     navigate(`/recipe/${recipe.id}`);
   };
 
+  const showNext = () => {
+    setActiveImageIndex((prev) => (prev + 1) % galleryImages.length);
+  };
+
+  const showPrev = () => {
+    setActiveImageIndex((prev) => (prev - 1 + galleryImages.length) % galleryImages.length);
+  };
+
+  // ── Render ───────────────────────────────────────────────────────────
   return (
-    <div className="recipe-details-overlay">
-      <div className="recipe-details">
-        <button className="close-btn" onClick={onClose}>
+    <div
+      className="recipe-details-overlay"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-label={recipeTitle}
+    >
+      <div className="recipe-details" onClick={(e) => e.stopPropagation()}>
+        <button className="close-btn" onClick={onClose} aria-label="Close">
           ✖
         </button>
-        {activeImage ? (
+
+        {activeImage && (
           <div className="details-gallery">
-            <div className="details-image-frame">
-              <img src={activeImage} alt={recipeTitle} />
-            </div>
+            <img src={activeImage} alt={recipeTitle} />
             {galleryImages.length > 1 && (
               <>
-                <button type="button" className="gallery-nav prev" onClick={showPrev}>
-                  ‹
-                </button>
-                <button type="button" className="gallery-nav next" onClick={showNext}>
-                  ›
-                </button>
+                <button type="button" className="gallery-nav prev" onClick={showPrev}>‹</button>
+                <button type="button" className="gallery-nav next" onClick={showNext}>›</button>
                 <div className="details-thumbs">
                   {galleryImages.map((img, index) => (
                     <button
@@ -74,21 +124,27 @@ const RecipeDetails = ({ recipe, onClose }) => {
               </>
             )}
           </div>
-        ) : null}
-        <h2>{recipeTitle}</h2>
-        <p>
-          <strong>Cooking Time:</strong> {recipeTime}
-        </p>
-        <p>
-          <strong>Ingredients:</strong> {recipeIngredients}
-        </p>
-        <p>
-          <strong>Instruction:</strong> {recipeDescription}
-        </p>
+        )}
 
-        <button type="button" className="view-full-recipe-btn" onClick={handleViewFull}>
-          View Full Recipe
-        </button>
+        <h2>{recipeTitle}</h2>
+        <p><strong>Cooking Time:</strong> {recipeTime}</p>
+        <p><strong>Description:</strong> {recipeDescription}</p>
+
+        <div className="details-action-bar">
+          <button
+            className={`popup-fav-btn ${isFavorited ? "active" : ""}`}
+            onClick={handleToggleFavorite}
+            disabled={favoriteLoading}
+            aria-label={isFavorited ? "Remove from favorites" : "Add to favorites"}
+          >
+            {isFavorited ? <IoMdHeart size={18} /> : <IoMdHeartEmpty size={18} />}
+            {isFavorited ? "Saved" : "Save"}
+          </button>
+
+          <button className="view-full-btn" onClick={handleViewFullRecipe}>
+            View Full Recipe →
+          </button>
+        </div>
       </div>
     </div>
   );

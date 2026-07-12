@@ -1,27 +1,52 @@
 import React from "react";
 import "./ConfirmDialog.css";
 
+/**
+ * ConfirmDialog
+ * Props:
+ *   isOpen       – boolean
+ *   title        – string
+ *   message      – string
+ *   confirmLabel – string (default "Confirm")
+ *   cancelLabel  – string (default "Cancel")
+ *   variant      – "danger" | "default"
+ *   onConfirm    – () => void
+ *   onCancel     – () => void
+ */
 const ConfirmDialog = ({
-  title,
+  isOpen,
+  title = "Are you sure?",
   message,
   confirmLabel = "Confirm",
   cancelLabel = "Cancel",
+  variant = "default",
   onConfirm,
   onCancel,
-  danger = false,
 }) => {
+  if (!isOpen) return null;
+
   return (
-    <div className="confirm-dialog-backdrop" onClick={onCancel}>
+    <div
+      className="confirm-backdrop"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="confirm-title"
+      onClick={onCancel}
+    >
       <div className="confirm-dialog" onClick={(e) => e.stopPropagation()}>
-        <h3>{title}</h3>
-        <p>{message}</p>
-        <div className="confirm-dialog-actions">
-          <button type="button" className="confirm-cancel" onClick={onCancel}>
+        <h3 id="confirm-title">{title}</h3>
+        {message && <p className="confirm-message">{message}</p>}
+        <div className="confirm-actions">
+          <button
+            type="button"
+            className="confirm-btn cancel"
+            onClick={onCancel}
+          >
             {cancelLabel}
           </button>
           <button
             type="button"
-            className={danger ? "confirm-danger" : "confirm-primary"}
+            className={`confirm-btn action ${variant}`}
             onClick={onConfirm}
           >
             {confirmLabel}

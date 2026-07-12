@@ -8,20 +8,31 @@ const Favorites = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    const fetchFavorites = async () => {
-      try {
-        const response = await api.get("/api/users/me/favorites");
-        setFavorites(response.data);
-      } catch (err) {
-        console.error(err);
-        setError("An error occurred while fetching favorites.");
-      } finally {
-        setLoading(false);
-      }
-    };
+  const fetchFavorites = async () => {
+    setLoading(true);
+    try {
+      const response = await api.get("/api/users/me/favorites");
+      setFavorites(response.data);
+      setError(null);
+    } catch (err) {
+      console.error(err);
+      setError("An error occurred while fetching favorites.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchFavorites();
+  }, []);
+
+  // Listen for favorites updates (from toggle in Recipeitem)
+  useEffect(() => {
+    const handleFavoritesUpdated = () => {
+      fetchFavorites();
+    };
+    window.addEventListener("favoritesUpdated", handleFavoritesUpdated);
+    return () => window.removeEventListener("favoritesUpdated", handleFavoritesUpdated);
   }, []);
 
   return (
@@ -37,13 +48,7 @@ const Favorites = () => {
         ) : error ? (
           <p className="fav-message fav-error">{error}</p>
         ) : favorites.length > 0 ? (
-          <Recipeitem
-            data={favorites}
-            showRemoveConfirm
-            onFavoriteRemoved={(recipeId) =>
-              setFavorites((prev) => prev.filter((item) => item.id !== recipeId))
-            }
-          />
+          <Recipeitem data={favorites} onRecipeDeleted={() => fetchFavorites()} />
         ) : (
           <div className="fav-empty">
             <p>You haven't added any favorite recipes yet.</p>
