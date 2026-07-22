@@ -4,7 +4,7 @@ import { FaEnvelope, FaLock, FaUser } from "react-icons/fa";
 import api from "../utils/api";
 import { useAuth } from "../context/AuthContext";
 import AuthLayout, { AuthLink } from "./AuthLayout";
-import "./Login.css";
+import "./login-register.css";
 
 const Register = () => {
   const [name, setName] = useState("");

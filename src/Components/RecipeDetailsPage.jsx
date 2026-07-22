@@ -5,6 +5,7 @@ import { IoShareSocialOutline, IoArrowBack } from "react-icons/io5";
 import api from "../utils/api";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
+import { formatCookingTime } from "../utils/cookingTime";
 import "./RecipeDetailsPage.css";
 
 const RecipeDetailsPage = () => {

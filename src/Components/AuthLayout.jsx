@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router";
-import "./Login.css";
+import "./login-register.css";
 
 const AuthLayout = ({ title, subtitle, children, footer }) => {
   return (

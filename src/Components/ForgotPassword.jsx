@@ -3,7 +3,7 @@ import { useNavigate } from "react-router";
 import { FaEnvelope } from "react-icons/fa";
 import api from "../utils/api";
 import AuthLayout, { AuthLink } from "./AuthLayout";
-import "./Login.css";
+import "./login-register.css";
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState("");

@@ -9,16 +9,13 @@
 .recipe-card {
   background: #fcfcfc;
   border-radius: 15px;
-  overflow: hidden;
+  /* overflow: hidden removed — it was clipping the three-dots dropdown.
+     The image-card already has its own overflow:hidden for the zoom effect. */
   cursor: pointer;
   transition: transform 0.25s ease, box-shadow 0.25s ease;
   box-shadow: 0 8px 22px rgba(17, 24, 39, 0.08);
-  /* display: flex;
-  flex-direction: column; */
-  border: 1px solid #f0f0f0;  
+  border: 1px solid #f0f0f0;
   max-width: 300px;
-  
- 
 }
 
 .recipe-card:hover {
@@ -31,7 +28,9 @@
   width: 100%;
   aspect-ratio: 4 / 3;
   overflow: hidden;
-  border-radius: 16px 16px 0 0;
+  /* Match the card's top border-radius so removing overflow:hidden from
+     .recipe-card doesn't expose square image corners */
+  border-radius: 14px 14px 0 0;
 }
 
 .image-card img {
@@ -88,9 +87,8 @@
   flex-shrink: 0;
 }
 
-.heart-btn,
-.card-menu-btn {
-  background: none;
+.heart-btn{
+   background: none;
   border: none;
   cursor: pointer;
   padding: 4px;
@@ -99,6 +97,17 @@
   border-radius: 8px;
   transition: background 0.14s ease;
 }
+.card-menu-btn {
+   background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+.card-menu-wrap {
+  position: relative;
+}
+}
 
 .heart-btn:hover,
 .card-menu-btn:hover {
@@ -106,20 +115,21 @@
 }
 
 .card-menu-wrap {
-  position: relative;
+  position: absolute;
 }
 
 .card-dropdown {
   position: absolute;
-  top: calc(100% + 4px);
+  top: calc(100% + 6px);
   right: 0;
   background: #fff;
-  border-radius: 10px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.16);
-  border: 1px solid #f0f0f0;
+  border-radius: 12px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.18);
+  border: 1px solid #e5e7eb;
   overflow: hidden;
-  z-index: 300;
-  min-width: 120px;
+  z-index: 9999;
+  min-width: 140px;
+  padding: 6px;
   animation: dropIn 0.14s ease;
 }
 
@@ -129,21 +139,26 @@
 }
 
 .card-dropdown button {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 8px;
   width: 100%;
   text-align: left;
-  background: none;
   border: none;
-  padding: 9px 14px;
+  border-radius: 8px;
+  padding: 9px 12px;
   font-size: 0.85rem;
-  font-weight: 600;
-  color: #1f2937;
+  font-weight: 700;
   cursor: pointer;
   transition: background 0.12s ease;
+  background: none;
+  color: #1f2937;
+  z-index: 9999;
 }
 
 .card-dropdown button:hover {
-  background: #f8fcf7;
+  background: #f0fdf4;
+  color: #15803d;
 }
 
 .card-dropdown button.delete-opt {
@@ -152,6 +167,7 @@
 
 .card-dropdown button.delete-opt:hover {
   background: #fef2f2;
+  color: #b91c1c;
 }
 
 .meta-row {
@@ -205,6 +221,35 @@
   .image-card {
     aspect-ratio: 4 / 3;
   }
+}
 
- 
+@media (max-width: 540px) {
+  .recipe-grid {
+    padding: 30px 14px;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+  }
+
+  .recipe-card {
+    max-width: 100%;
+  }
+
+  .name-card h3 {
+    font-size: 0.9rem;
+  }
+
+  .time-badge {
+    font-size: 10px;
+    padding: 4px 8px;
+  }
+
+  .created-at {
+    font-size: 0.76rem;
+  }
+}
+
+@media (max-width: 340px) {
+  .recipe-grid {
+    grid-template-columns: 1fr;
+  }
 }

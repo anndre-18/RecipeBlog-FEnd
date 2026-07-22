@@ -223,3 +223,31 @@
     background: linear-gradient(to right, transparent, #b9d3b8, transparent);
   }
 }
+
+@media (max-width: 480px) {
+  .add-recipe-page {
+    padding: 1rem 0.75rem;
+    margin-top: 80px;
+    align-items: flex-start;
+  }
+
+  .add-recipe-container {
+    padding: 1.1rem;
+    border-radius: 16px;
+  }
+
+  .add-recipe-left h2,
+  .add-recipe-right h2 {
+    font-size: 1.15rem;
+  }
+
+  .image-frame {
+    min-height: 200px;
+  }
+
+  .add-image-button,
+  .create-post-button {
+    width: 100%;
+    text-align: center;
+  }
+}

@@ -2,6 +2,7 @@ import React, { useRef, useState } from "react";
 import axios from "axios";
 import api from "../utils/api";
 import { useToast } from "../context/ToastContext";
+import { validateCookingTime } from "../utils/cookingTime";
 import ImageCropper from "./ImageCropper";
 import "./add-recipe.css";
 
@@ -15,28 +16,33 @@ const CLOUDINARY_UPLOAD_PRESET =
   import.meta.env.VITE_CLOUDINARY_PRESET ||
   "";
 
+const EMPTY_COOKING_TIME = { hours: "", minutes: "", seconds: "" };
+
 const AddRecipe = () => {
   const toast = useToast();
+
   const [formData, setFormData] = useState({
     recipeName: "",
-    timeRequired: "",
+    servings: "",
+    description: "",
     ingredients: "",
     instructions: "",
-    description: "",
   });
+
+  const [cookingTime, setCookingTime] = useState(EMPTY_COOKING_TIME);
   const [selectedImages, setSelectedImages] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const fileInputRef = useRef(null);
 
-  // Cropper state — one pending raw file at a time
-  const [cropQueue, setCropQueue] = useState([]); // raw {id, file, rawUrl} waiting to crop
-  const [currentCrop, setCurrentCrop] = useState(null); // the one currently in the cropper
+  const [cropQueue, setCropQueue] = useState([]);
+  const [currentCrop, setCurrentCrop] = useState(null);
+
+  // ── Helpers ─────────────────────────────────────────────────────────
 
   const applyAutoZoomForRatio = (event) => {
     const image = event.currentTarget;
     const ratio = image.naturalWidth / image.naturalHeight;
-    const targetRatio = 4 / 3;
-    const fitScale = ratio < targetRatio ? 1.18 : 1;
+    const fitScale = ratio < 4 / 3 ? 1.18 : 1;
     image.style.setProperty("--fit-scale", String(fitScale));
   };
 
@@ -45,7 +51,17 @@ const AddRecipe = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  const handleTimeChange = (event) => {
+    const { name, value } = event.target;
+    // Allow only non-negative integers
+    if (value !== "" && (!/^\d+$/.test(value) || Number(value) < 0)) return;
+    setCookingTime((prev) => ({ ...prev, [name]: value }));
+  };
+
+  // ── Image handling ───────────────────────────────────────────────────
+
   const handleAddImageClick = () => {
+    if (selectedImages.length >= MAX_IMAGES) return;
     fileInputRef.current?.click();
   };
 
@@ -53,52 +69,39 @@ const AddRecipe = () => {
     const incomingFiles = Array.from(event.target.files || []);
     if (incomingFiles.length === 0) return;
 
-    const currentCount = selectedImages.length;
-    const remainingSlots = MAX_IMAGES - currentCount;
-
-    if (remainingSlots <= 0) {
+    const remaining = MAX_IMAGES - selectedImages.length;
+    if (remaining <= 0) {
       toast.error("Maximum 3 images are allowed.");
       event.target.value = "";
       return;
     }
 
-    const filesToAdd = incomingFiles.slice(0, remainingSlots);
-
-    if (incomingFiles.length > remainingSlots) {
+    const filesToAdd = incomingFiles.slice(0, remaining);
+    if (incomingFiles.length > remaining) {
       toast.info("Only 3 images are allowed. Extra files were ignored.");
     }
 
-    // Build queue entries with raw object URLs
     const queued = filesToAdd.map((file) => ({
       id: `${file.name}-${file.size}-${Date.now()}-${Math.random().toString(16).slice(2)}`,
       file,
       rawUrl: URL.createObjectURL(file),
     }));
 
-    // Start cropping the first one; push the rest into queue
     setCurrentCrop(queued[0]);
-    if (queued.length > 1) {
-      setCropQueue(queued.slice(1));
-    }
-
+    if (queued.length > 1) setCropQueue(queued.slice(1));
     event.target.value = "";
   };
 
   const handleCropConfirm = (blob) => {
-    // Convert the cropped blob into a preview entry
     const previewUrl = URL.createObjectURL(blob);
     const croppedEntry = {
       id: currentCrop.id,
       file: new File([blob], "cropped.jpg", { type: "image/jpeg" }),
       previewUrl,
     };
-
-    // Clean up raw URL
     URL.revokeObjectURL(currentCrop.rawUrl);
-
     setSelectedImages((prev) => [...prev, croppedEntry]);
 
-    // Move to the next in the queue, if any
     if (cropQueue.length > 0) {
       setCurrentCrop(cropQueue[0]);
       setCropQueue((prev) => prev.slice(1));
@@ -109,7 +112,6 @@ const AddRecipe = () => {
 
   const handleCropCancel = () => {
     URL.revokeObjectURL(currentCrop.rawUrl);
-    // Also discard the rest of the queue
     cropQueue.forEach((item) => URL.revokeObjectURL(item.rawUrl));
     setCropQueue([]);
     setCurrentCrop(null);
@@ -117,64 +119,68 @@ const AddRecipe = () => {
 
   const handleRemoveImage = (id) => {
     setSelectedImages((prev) => {
-      const imageToRemove = prev.find((image) => image.id === id);
-      if (imageToRemove?.previewUrl) URL.revokeObjectURL(imageToRemove.previewUrl);
-      return prev.filter((image) => image.id !== id);
+      const img = prev.find((i) => i.id === id);
+      if (img?.previewUrl) URL.revokeObjectURL(img.previewUrl);
+      return prev.filter((i) => i.id !== id);
     });
   };
+
+  // ── Upload ───────────────────────────────────────────────────────────
 
   const uploadImageToCloudinary = async (file) => {
     const form = new FormData();
     form.append("file", file);
     form.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
-    const uploadUrl = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`;
-    const response = await axios.post(uploadUrl, form, {
-      headers: { "Content-Type": "multipart/form-data" },
-    });
+    const response = await axios.post(
+      `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`,
+      form,
+      { headers: { "Content-Type": "multipart/form-data" } }
+    );
     return response.data.secure_url;
   };
 
+  // ── Validation ───────────────────────────────────────────────────────
+
   const validateForm = () => {
-    const { recipeName, timeRequired, ingredients, instructions, description } = formData;
-    if (
-      !recipeName.trim() ||
-      !timeRequired.toString().trim() ||
-      !ingredients.trim() ||
-      !instructions.trim() ||
-      !description.trim()
-    ) {
-      return "All fields are required.";
+    const { recipeName, servings, description, ingredients, instructions } = formData;
+
+    if (!recipeName.trim()) return "Recipe name is required.";
+    if (!description.trim()) return "Description is required.";
+    if (!ingredients.trim()) return "Ingredients are required.";
+    if (!instructions.trim()) return "Instructions are required.";
+
+    const servingsNum = Number(servings);
+    if (!servings || isNaN(servingsNum) || servingsNum < 1 || !Number.isInteger(servingsNum)) {
+      return "Servings must be a positive whole number (e.g. 2, 4, 6).";
     }
-    if (selectedImages.length < 1) {
-      return "At least 1 image is required.";
-    }
-    if (selectedImages.length > MAX_IMAGES) {
-      return "Maximum 3 images are allowed.";
-    }
+
+    const timeError = validateCookingTime(cookingTime);
+    if (timeError) return timeError;
+
+    if (selectedImages.length < 1) return "At least 1 image is required.";
+    if (selectedImages.length > MAX_IMAGES) return "Maximum 3 images are allowed.";
+
     if (!CLOUDINARY_CLOUD_NAME || !CLOUDINARY_UPLOAD_PRESET) {
-      return "Cloudinary config missing. Add VITE_CLOUDINARY_CLOUD_NAME and VITE_CLOUDINARY_UPLOAD_PRESET in recipeapp/.env";
+      return "Cloudinary config missing. Check your .env file.";
     }
     return "";
   };
 
   const resetForm = () => {
-    setFormData({ recipeName: "", timeRequired: "", ingredients: "", instructions: "", description: "" });
+    setFormData({ recipeName: "", servings: "", description: "", ingredients: "", instructions: "" });
+    setCookingTime(EMPTY_COOKING_TIME);
     setSelectedImages((prev) => {
-      prev.forEach((image) => {
-        if (image.previewUrl) URL.revokeObjectURL(image.previewUrl);
-      });
+      prev.forEach((img) => { if (img.previewUrl) URL.revokeObjectURL(img.previewUrl); });
       return [];
     });
   };
 
+  // ── Submit ───────────────────────────────────────────────────────────
+
   const handleSubmit = async (event) => {
     event.preventDefault();
-
     const validationError = validateForm();
-    if (validationError) {
-      toast.error(validationError);
-      return;
-    }
+    if (validationError) { toast.error(validationError); return; }
 
     setIsSubmitting(true);
     try {
@@ -182,34 +188,46 @@ const AddRecipe = () => {
         selectedImages.map((image) => uploadImageToCloudinary(image.file))
       );
 
-      const postPayload = {
-        recipeName: formData.recipeName.trim(),
-        timeRequired: formData.timeRequired.toString().trim(),
-        ingredients: formData.ingredients.trim(),
-        instructions: formData.instructions.trim(),
-        description: formData.description.trim(),
-        images: urls,
-        createdAt: new Date(),
+      const ct = {
+        hours: Number(cookingTime.hours) || 0,
+        minutes: Number(cookingTime.minutes) || 0,
+        seconds: Number(cookingTime.seconds) || 0,
       };
 
-      await api.post("/api/recipes", postPayload);
+      await api.post("/api/recipes", {
+        recipeName: formData.recipeName.trim(),
+        cookingTime: ct,
+        servings: Number(formData.servings),
+        description: formData.description.trim(),
+        ingredients: formData.ingredients.trim(),
+        instructions: formData.instructions.trim(),
+        images: urls,
+        createdAt: new Date(),
+      });
 
       toast.success("Recipe created successfully!");
       resetForm();
     } catch (error) {
       console.error(error);
-      toast.error(
-        error.response?.data?.message || "Failed to create recipe. Please try again."
-      );
+      toast.error(error.response?.data?.message || "Failed to create recipe. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  // ── Image button label ───────────────────────────────────────────────
+  const imageCount = selectedImages.length;
+  const imageLimitReached = imageCount >= MAX_IMAGES;
+  const imageButtonLabel = imageLimitReached
+    ? `Maximum limit reached (${imageCount}/${MAX_IMAGES})`
+    : `Add Image${imageCount > 0 ? ` (${imageCount}/${MAX_IMAGES})` : ""}`;
+
+  // ── Render ───────────────────────────────────────────────────────────
   return (
     <>
       <section className="add-recipe-page">
         <div className="add-recipe-container">
+
           {/* ── Left: images ── */}
           <div className="add-recipe-left">
             <h2>Upload Images</h2>
@@ -227,10 +245,7 @@ const AddRecipe = () => {
                           onLoad={applyAutoZoomForRatio}
                         />
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveImage(image.id)}
-                      >
+                      <button type="button" onClick={() => handleRemoveImage(image.id)}>
                         Remove
                       </button>
                     </div>
@@ -238,24 +253,29 @@ const AddRecipe = () => {
                 </div>
               )}
             </div>
-            <p className="ratio-note">Images are cropped to 4:3 for consistent cards.</p>
+
+            <p className="image-limit-note">
+              {imageLimitReached
+                ? `✓ Maximum 3 images added.`
+                : `${imageCount} of ${MAX_IMAGES} images added — maximum 3 allowed.`}
+            </p>
 
             <div className="dots-row" aria-label="selected images indicator">
               {Array.from({ length: MAX_IMAGES }).map((_, index) => (
                 <span
                   key={index}
-                  className={`dot ${index < selectedImages.length ? "active" : ""}`}
+                  className={`dot ${index < imageCount ? "active" : ""}`}
                 />
               ))}
             </div>
 
             <button
-              className="add-image-button"
+              className={`add-image-button ${imageLimitReached ? "limit-reached" : ""}`}
               type="button"
               onClick={handleAddImageClick}
-              disabled={selectedImages.length >= MAX_IMAGES}
+              disabled={imageLimitReached}
             >
-              Add Image
+              {imageButtonLabel}
             </button>
             <input
               ref={fileInputRef}
@@ -273,6 +293,7 @@ const AddRecipe = () => {
           <div className="add-recipe-right">
             <h2>Write Recipe</h2>
             <form className="recipe-form" onSubmit={handleSubmit}>
+
               <label>
                 Recipe Name
                 <input
@@ -284,14 +305,57 @@ const AddRecipe = () => {
                 />
               </label>
 
+              {/* Cooking Time */}
+              <div className="form-group-label">Cooking Time</div>
+              <div className="cooking-time-row">
+                <div className="time-unit">
+                  <input
+                    type="number"
+                    name="hours"
+                    value={cookingTime.hours}
+                    onChange={handleTimeChange}
+                    min="0"
+                    placeholder="0"
+                  />
+                  <span className="time-unit-label">hrs</span>
+                </div>
+                <div className="time-unit">
+                  <input
+                    type="number"
+                    name="minutes"
+                    value={cookingTime.minutes}
+                    onChange={handleTimeChange}
+                    min="0"
+                    max="59"
+                    placeholder="0"
+                  />
+                  <span className="time-unit-label">min</span>
+                </div>
+                <div className="time-unit">
+                  <input
+                    type="number"
+                    name="seconds"
+                    value={cookingTime.seconds}
+                    onChange={handleTimeChange}
+                    min="0"
+                    max="59"
+                    placeholder="0"
+                  />
+                  <span className="time-unit-label">sec</span>
+                </div>
+              </div>
+
+              {/* Servings */}
               <label>
-                Time Required
+                Servings
                 <input
-                  type="text"
-                  name="timeRequired"
-                  value={formData.timeRequired}
+                  type="number"
+                  name="servings"
+                  value={formData.servings}
                   onChange={handleFieldChange}
-                  placeholder="e.g. 30 minutes"
+                  min="1"
+                  step="1"
+                  placeholder="e.g. 4"
                 />
               </label>
 
@@ -301,7 +365,7 @@ const AddRecipe = () => {
                   name="description"
                   value={formData.description}
                   onChange={handleFieldChange}
-                  rows={4}
+                  rows={3}
                   placeholder="Brief description of the recipe..."
                 />
               </label>
@@ -340,7 +404,6 @@ const AddRecipe = () => {
         </div>
       </section>
 
-      {/* Image cropper — shown one image at a time from the crop queue */}
       {currentCrop && (
         <ImageCropper
           imageSrc={currentCrop.rawUrl}

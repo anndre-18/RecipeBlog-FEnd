@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { CgProfile } from "react-icons/cg";
 import { BsThreeDotsVertical } from "react-icons/bs";
+import { MdEdit, MdDelete } from "react-icons/md";
 import axios from "axios";
 import api from "../utils/api";
 import { useAuth } from "../context/AuthContext";
@@ -166,7 +167,7 @@ const Profile = () => {
 
     try {
       await api.delete(`/api/recipes/${recipeId}`);
-      setMyRecipes((prev) => prev.filter((r) => r.id !== recipeId));
+      setMyRecipes((prev) => prev.filter((r) => r._id !== recipeId));
       toast.success("Recipe deleted successfully");
     } catch (err) {
       toast.error(err.response?.data?.message || "Failed to delete recipe");
@@ -330,13 +331,13 @@ const Profile = () => {
                         {openMenuId === recipe.id && (
                           <div className="dropdown-menu">
                             <button onClick={() => handleEditRecipe(recipe.id)}>
-                              Edit
+                              <MdEdit size={15} color="#15803d" /> Edit
                             </button>
                             <button
                               className="delete-option"
                               onClick={() => handleDeleteRecipe(recipe.id)}
                             >
-                              Delete
+                              <MdDelete size={15} color="#dc2626" /> Delete
                             </button>
                           </div>
                         )}

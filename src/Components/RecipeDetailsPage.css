@@ -372,3 +372,18 @@
     padding: 22px 18px;
   }
 }
+
+@media (max-width: 480px) {
+  .rdp-page {
+    padding: 80px 12px 40px;
+  }
+
+  .rdp-info-col {
+    padding: 18px 14px;
+  }
+
+  .rdp-thumb img {
+    width: 60px;
+    height: 46px;
+  }
+}

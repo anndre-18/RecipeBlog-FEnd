@@ -232,3 +232,20 @@
     transform: translateY(0) scale(1);
   }
 }
+
+@media (max-width: 540px) {
+  .recipe-details {
+    width: 96%;
+    padding: 44px 16px 20px;
+    max-height: 92dvh;
+  }
+
+  .recipe-details img {
+    height: 200px;
+  }
+
+  .details-action-bar {
+    flex-direction: column;
+    gap: 8px;
+  }
+}

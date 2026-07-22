@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from "react-router";
 import { FaLock } from "react-icons/fa";
 import api from "../utils/api";
 import AuthLayout, { AuthLink } from "./AuthLayout";
-import "./Login.css";
+import "./login-register.css";
 
 const ResetPassword = () => {
   const location = useLocation();

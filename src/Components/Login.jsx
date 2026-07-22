@@ -4,7 +4,7 @@ import { FaEnvelope, FaLock } from "react-icons/fa";
 import api from "../utils/api";
 import { useAuth } from "../context/AuthContext";
 import AuthLayout, { AuthLink } from "./AuthLayout";
-import "./Login.css";
+import "./login-register.css";
 
 const Login = () => {
   const [mode, setMode] = useState("password");

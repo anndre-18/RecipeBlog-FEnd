@@ -4,7 +4,7 @@ import api from "../utils/api";
 import { useAuth } from "../context/AuthContext";
 import AuthLayout from "./AuthLayout";
 import OtpInput from "./OtpInput";
-import "./Login.css";
+import "./login-register.css";
 
 const purposeConfig = {
   register: {

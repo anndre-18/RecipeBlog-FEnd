@@ -4,6 +4,7 @@ import axios from "axios";
 import api from "../utils/api";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
+import { parseCookingTime, validateCookingTime } from "../utils/cookingTime";
 import ImageCropper from "./ImageCropper";
 import "./add-recipe.css";
 import "./EditRecipe.css";
@@ -26,31 +27,30 @@ const EditRecipe = () => {
 
   const [formData, setFormData] = useState({
     recipeName: "",
-    timeRequired: "",
+    servings: "",
+    description: "",
     ingredients: "",
     instructions: "",
-    description: "",
   });
 
-  // Mix of existing URLs (strings) and new cropped images (File objects with previewUrl)
-  const [imageSlots, setImageSlots] = useState([]); // { type: 'existing'|'new', url?, file?, previewUrl?, id }
+  const [cookingTime, setCookingTime] = useState({ hours: "0", minutes: "0", seconds: "0" });
+  const [imageSlots, setImageSlots] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loadingRecipe, setLoadingRecipe] = useState(true);
 
-  // Cropper state
   const [cropQueue, setCropQueue] = useState([]);
   const [currentCrop, setCurrentCrop] = useState(null);
 
   const fileInputRef = useRef(null);
 
-  // Load the existing recipe
+  // ── Load existing recipe ─────────────────────────────────────────────
+
   useEffect(() => {
     const fetchRecipe = async () => {
       try {
         const res = await api.get(`/api/recipes/${id}`);
         const recipe = res.data;
 
-        // Authorization check on the frontend too
         if (recipe.ownerId !== user?.id) {
           toast.error("You are not authorized to edit this recipe.");
           navigate("/");
@@ -59,13 +59,15 @@ const EditRecipe = () => {
 
         setFormData({
           recipeName: recipe.recipeName || "",
-          timeRequired: recipe.timeRequired || "",
+          servings: recipe.servings != null ? String(recipe.servings) : "",
+          description: recipe.description || "",
           ingredients: recipe.ingredients || "",
           instructions: recipe.instructions || "",
-          description: recipe.description || "",
         });
 
-        // Convert existing image URLs to slots
+        // Pre-fill cooking time — use structured object if present, else zeroes
+        setCookingTime(parseCookingTime(recipe));
+
         const existingSlots = (recipe.images || []).map((url, i) => ({
           id: `existing-${i}-${url}`,
           type: "existing",
@@ -85,10 +87,11 @@ const EditRecipe = () => {
     if (user) fetchRecipe();
   }, [id, user, navigate, toast]);
 
+  // ── Handlers ─────────────────────────────────────────────────────────
+
   const applyAutoZoomForRatio = (event) => {
     const image = event.currentTarget;
-    const ratio = image.naturalWidth / image.naturalHeight;
-    const fitScale = ratio < 4 / 3 ? 1.18 : 1;
+    const fitScale = image.naturalWidth / image.naturalHeight < 4 / 3 ? 1.18 : 1;
     image.style.setProperty("--fit-scale", String(fitScale));
   };
 
@@ -97,7 +100,14 @@ const EditRecipe = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  const handleTimeChange = (e) => {
+    const { name, value } = e.target;
+    if (value !== "" && (!/^\d+$/.test(value) || Number(value) < 0)) return;
+    setCookingTime((prev) => ({ ...prev, [name]: value }));
+  };
+
   const handleAddImageClick = () => {
+    if (imageSlots.length >= MAX_IMAGES) return;
     fileInputRef.current?.click();
   };
 
@@ -172,11 +182,24 @@ const EditRecipe = () => {
     return res.data.secure_url;
   };
 
+  // ── Validation ───────────────────────────────────────────────────────
+
   const validateForm = () => {
-    const { recipeName, timeRequired, ingredients, instructions, description } = formData;
-    if (!recipeName.trim() || !timeRequired.trim() || !ingredients.trim() || !instructions.trim() || !description.trim()) {
-      return "All fields are required.";
+    const { recipeName, servings, description, ingredients, instructions } = formData;
+
+    if (!recipeName.trim()) return "Recipe name is required.";
+    if (!description.trim()) return "Description is required.";
+    if (!ingredients.trim()) return "Ingredients are required.";
+    if (!instructions.trim()) return "Instructions are required.";
+
+    const servingsNum = Number(servings);
+    if (!servings || isNaN(servingsNum) || servingsNum < 1 || !Number.isInteger(servingsNum)) {
+      return "Servings must be a positive whole number (e.g. 2, 4, 6).";
     }
+
+    const timeError = validateCookingTime(cookingTime);
+    if (timeError) return timeError;
+
     if (imageSlots.length < 1) return "At least 1 image is required.";
     if (imageSlots.length > MAX_IMAGES) return "Maximum 3 images are allowed.";
     if (!CLOUDINARY_CLOUD_NAME || !CLOUDINARY_UPLOAD_PRESET) {
@@ -185,6 +208,8 @@ const EditRecipe = () => {
     return "";
   };
 
+  // ── Submit ───────────────────────────────────────────────────────────
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     const err = validateForm();
@@ -192,7 +217,6 @@ const EditRecipe = () => {
 
     setIsSubmitting(true);
     try {
-      // Upload new images; keep existing URLs as-is
       const imageUrls = await Promise.all(
         imageSlots.map((slot) =>
           slot.type === "existing"
@@ -201,12 +225,19 @@ const EditRecipe = () => {
         )
       );
 
+      const ct = {
+        hours: Number(cookingTime.hours) || 0,
+        minutes: Number(cookingTime.minutes) || 0,
+        seconds: Number(cookingTime.seconds) || 0,
+      };
+
       await api.put(`/api/recipes/${id}`, {
         recipeName: formData.recipeName.trim(),
-        timeRequired: formData.timeRequired.trim(),
+        cookingTime: ct,
+        servings: Number(formData.servings),
+        description: formData.description.trim(),
         ingredients: formData.ingredients.trim(),
         instructions: formData.instructions.trim(),
-        description: formData.description.trim(),
         images: imageUrls,
       });
 
@@ -220,6 +251,15 @@ const EditRecipe = () => {
     }
   };
 
+  // ── Image button label ───────────────────────────────────────────────
+  const imageCount = imageSlots.length;
+  const imageLimitReached = imageCount >= MAX_IMAGES;
+  const imageButtonLabel = imageLimitReached
+    ? `Maximum limit reached (${imageCount}/${MAX_IMAGES})`
+    : `Add Image${imageCount > 0 ? ` (${imageCount}/${MAX_IMAGES})` : ""}`;
+
+  // ── Loading state ────────────────────────────────────────────────────
+
   if (loadingRecipe) {
     return (
       <div className="edit-recipe-loading">
@@ -228,6 +268,8 @@ const EditRecipe = () => {
       </div>
     );
   }
+
+  // ── Render ───────────────────────────────────────────────────────────
 
   return (
     <>
@@ -265,21 +307,26 @@ const EditRecipe = () => {
                 </div>
               )}
             </div>
-            <p className="ratio-note">Images are cropped to 4:3 for consistent cards.</p>
+
+            <p className="image-limit-note">
+              {imageLimitReached
+                ? `✓ Maximum 3 images added.`
+                : `${imageCount} of ${MAX_IMAGES} images — maximum 3 allowed.`}
+            </p>
 
             <div className="dots-row" aria-label="image count indicator">
               {Array.from({ length: MAX_IMAGES }).map((_, i) => (
-                <span key={i} className={`dot ${i < imageSlots.length ? "active" : ""}`} />
+                <span key={i} className={`dot ${i < imageCount ? "active" : ""}`} />
               ))}
             </div>
 
             <button
-              className="add-image-button"
+              className={`add-image-button ${imageLimitReached ? "limit-reached" : ""}`}
               type="button"
               onClick={handleAddImageClick}
-              disabled={imageSlots.length >= MAX_IMAGES}
+              disabled={imageLimitReached}
             >
-              Add Image
+              {imageButtonLabel}
             </button>
             <input
               ref={fileInputRef}
@@ -297,6 +344,7 @@ const EditRecipe = () => {
           <div className="add-recipe-right">
             <h2>Edit Details</h2>
             <form className="recipe-form" onSubmit={handleSubmit}>
+
               <label>
                 Recipe Name
                 <input
@@ -308,14 +356,57 @@ const EditRecipe = () => {
                 />
               </label>
 
+              {/* Cooking Time */}
+              <div className="form-group-label">Cooking Time</div>
+              <div className="cooking-time-row">
+                <div className="time-unit">
+                  <input
+                    type="number"
+                    name="hours"
+                    value={cookingTime.hours}
+                    onChange={handleTimeChange}
+                    min="0"
+                    placeholder="0"
+                  />
+                  <span className="time-unit-label">hrs</span>
+                </div>
+                <div className="time-unit">
+                  <input
+                    type="number"
+                    name="minutes"
+                    value={cookingTime.minutes}
+                    onChange={handleTimeChange}
+                    min="0"
+                    max="59"
+                    placeholder="0"
+                  />
+                  <span className="time-unit-label">min</span>
+                </div>
+                <div className="time-unit">
+                  <input
+                    type="number"
+                    name="seconds"
+                    value={cookingTime.seconds}
+                    onChange={handleTimeChange}
+                    min="0"
+                    max="59"
+                    placeholder="0"
+                  />
+                  <span className="time-unit-label">sec</span>
+                </div>
+              </div>
+
+              {/* Servings */}
               <label>
-                Time Required
+                Servings
                 <input
-                  type="text"
-                  name="timeRequired"
-                  value={formData.timeRequired}
+                  type="number"
+                  name="servings"
+                  value={formData.servings}
                   onChange={handleFieldChange}
-                  placeholder="e.g. 30 minutes"
+                  min="1"
+                  step="1"
+                  placeholder="e.g. 4"
                 />
               </label>
 
@@ -325,7 +416,7 @@ const EditRecipe = () => {
                   name="description"
                   value={formData.description}
                   onChange={handleFieldChange}
-                  rows={4}
+                  rows={3}
                   placeholder="Brief description of the recipe..."
                 />
               </label>

@@ -54,3 +54,17 @@
 .fav-empty p + p {
   margin-top: 10px;
 }
+
+@media (max-width: 600px) {
+  .fav-hero {
+    padding: 100px 16px 5px;
+  }
+
+  .fav-title {
+    font-size: 1.6rem;
+  }
+
+  .fav-subtitle {
+    font-size: 0.9rem;
+  }
+}

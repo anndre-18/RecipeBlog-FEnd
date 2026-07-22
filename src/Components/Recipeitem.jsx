@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router";
 import { IoMdHeartEmpty, IoMdHeart } from "react-icons/io";
 import { BsThreeDotsVertical } from "react-icons/bs";
+import { MdEdit, MdDelete } from "react-icons/md";
 import RecipeDetails from "./RecipeDetails";
 import ConfirmDialog from "./ConfirmDialog";
 import api from "../utils/api";
@@ -83,7 +84,7 @@ const Recipeitem = ({ data, onRecipeDeleted }) => {
       return;
     }
 
-    const isLiked = likedItems[item.id];
+    const isLiked = likedItems[item._id];
 
     // If already liked and trying to remove — show confirmation
     if (isLiked) {
@@ -92,9 +93,9 @@ const Recipeitem = ({ data, onRecipeDeleted }) => {
     }
 
     // Otherwise add to favorites immediately
-    setLikedItems((prev) => ({ ...prev, [item.id]: true }));
+    setLikedItems((prev) => ({ ...prev, [item._id]: true }));
     try {
-      const response = await api.post("/api/favorites/toggle", { recipeId: item.id });
+      const response = await api.post("/api/favorites/toggle", { recipeId: item._id });
       const updatedFavorites = response.data.favorites;
       const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
       updateUser({ ...storedUser, favorites: updatedFavorites });
@@ -104,7 +105,7 @@ const Recipeitem = ({ data, onRecipeDeleted }) => {
       toast.success("Added to favorites");
     } catch (error) {
       console.error("Failed to toggle favorite:", error);
-      setLikedItems((prev) => ({ ...prev, [item.id]: false }));
+      setLikedItems((prev) => ({ ...prev, [item._id]: false }));
       toast.error("Failed to update favorites");
     }
   };
@@ -112,10 +113,10 @@ const Recipeitem = ({ data, onRecipeDeleted }) => {
   const confirmRemoveFavorite = async () => {
     const item = removeConfirm.item;
     setRemoveConfirm({ open: false, item: null });
-    setLikedItems((prev) => ({ ...prev, [item.id]: false }));
+    setLikedItems((prev) => ({ ...prev, [item._id]: false }));
 
     try {
-      const response = await api.post("/api/favorites/toggle", { recipeId: item.id });
+      const response = await api.post("/api/favorites/toggle", { recipeId: item._id });
       const updatedFavorites = response.data.favorites;
       const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
       updateUser({ ...storedUser, favorites: updatedFavorites });
@@ -125,7 +126,7 @@ const Recipeitem = ({ data, onRecipeDeleted }) => {
       toast.success("Removed from favorites");
     } catch (error) {
       console.error("Failed to remove favorite:", error);
-      setLikedItems((prev) => ({ ...prev, [item.id]: true }));
+      setLikedItems((prev) => ({ ...prev, [item._id]: true }));
       toast.error("Failed to update favorites");
     }
   };
@@ -163,7 +164,7 @@ const Recipeitem = ({ data, onRecipeDeleted }) => {
 
           return (
             <div
-              key={item.id}
+              key={item._id}
               className="recipe-card"
               onClick={() => setSelectedRecipe(item)}
             >
@@ -184,9 +185,9 @@ const Recipeitem = ({ data, onRecipeDeleted }) => {
                   <button
                     className="heart-btn"
                     onClick={(e) => handleLikeClick(item, e)}
-                    aria-label={likedItems[item.id] ? "Remove from favorites" : "Add to favorites"}
+                    aria-label={likedItems[item._id] ? "Remove from favorites" : "Add to favorites"}
                   >
-                    {likedItems[item.id] ? (
+                    {likedItems[item._id] ? (
                       <IoMdHeart size={22} className="btn" color="red" />
                     ) : (
                       <IoMdHeartEmpty size={22} className="btn" />
@@ -197,29 +198,29 @@ const Recipeitem = ({ data, onRecipeDeleted }) => {
                   {isOwner && (
                     <div
                       className="card-menu-wrap"
-                      ref={openMenuId === item.id ? menuRef : null}
+                      ref={openMenuId === item._id ? menuRef : null}
                     >
                       <button
                         className="card-menu-btn"
                         onClick={(e) => {
                           e.stopPropagation();
-                          setOpenMenuId(openMenuId === item.id ? null : item.id);
+                          setOpenMenuId(openMenuId === item._id ? null : item._id);
                         }}
                         aria-label="More options"
                       >
                         <BsThreeDotsVertical size={17} />
                       </button>
 
-                      {openMenuId === item.id && (
+                      {openMenuId === item._id && (
                         <div className="card-dropdown">
-                          <button onClick={(e) => handleEditRecipe(e, item.id)}>
-                            Edit
+                          <button onClick={(e) => handleEditRecipe(e, item._id)}>
+                            <MdEdit size={15} color="#15803d" /> Edit
                           </button>
                           <button
                             className="delete-opt"
-                            onClick={(e) => handleDeleteClick(e, item.id)}
+                            onClick={(e) => handleDeleteClick(e, item._id)}
                           >
-                            Delete
+                            <MdDelete size={15} color="#dc2626" /> Delete
                           </button>
                         </div>
                       )}
